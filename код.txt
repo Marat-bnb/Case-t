@@ -1,0 +1,141 @@
+import sys
+import os
+from PySide6.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QMessageBox, QHeaderView
+from PySide6.QtUiTools import QUiLoader
+from PySide6.QtCore import QFile, QDate
+
+
+class LibraryApp(QMainWindow):
+    def __init__(self):
+        super().__init__()
+
+        # --- 1. ЗАГРУЗКА ИНТЕРФЕЙСА ---
+        loader = QUiLoader()
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        ui_path = os.path.join(script_dir, "library.ui")
+
+        ui_file = QFile(ui_path)
+        if not ui_file.open(QFile.ReadOnly):
+            print(f"Ошибка: Не найден файл {ui_path}")
+            return
+
+        self.ui = loader.load(ui_file)
+        ui_file.close()
+
+        if self.ui:
+            self.setCentralWidget(self.ui)
+            self.setWindowTitle("Система учета книг PIN-251")
+
+            # --- 2. ФИНАЛЬНЫЕ СТИЛИ (БЕЛЫЙ И ЗЕЛЕНЫЙ) ---
+            # --- ОБНОВЛЕННЫЙ СТИЛЬ С ИСПРАВЛЕНИЕМ ВЫПАДАЮЩЕГО СПИСКА ---
+            self.setStyleSheet("""
+                            QMainWindow, QWidget#centralwidget { 
+                                background-color: #ffffff; 
+                            }
+                            QLabel { color: #212529; }
+
+                            QLineEdit, QComboBox, QDateEdit { 
+                                background-color: #ffffff; 
+                                border: 1px solid #ced4da; 
+                                border-radius: 4px;
+                                color: #212529; 
+                                padding: 4px; 
+                            }
+
+                            /* Исправление видимости текста в выпадающем списке */
+                            QComboBox QAbstractItemView {
+                                background-color: #ffffff;
+                                color: #212529;
+                                selection-background-color: #e9ecef;
+                                selection-color: #212529;
+                                border: 1px solid #ced4da;
+                            }
+
+                            QPushButton#btnAdd {
+                                background-color: #28a745; 
+                                color: white; 
+                                border-radius: 4px; 
+                                font-weight: bold; 
+                                padding: 6px 15px;
+                                border: none;
+                            }
+                            QPushButton#btnAdd:hover { background-color: #218838; }
+
+                            QTableWidget { 
+                                background-color: #ffffff; 
+                                gridline-color: #dee2e6; 
+                                border: 1px solid #dee2e6;
+                                color: #212529;
+                            }
+                            QHeaderView::section { 
+                                background-color: #f8f9fa; 
+                                color: #495057; 
+                                padding: 8px; 
+                                border: 1px solid #dee2e6;
+                                font-weight: bold;
+                            }
+                        """)
+
+            # --- 3. НАСТРОЙКА ТАБЛИЦЫ ---
+            headers = ["Название книги", "Автор", "Дата", "Операция"]
+            self.ui.tableRecords.setColumnCount(len(headers))
+            self.ui.tableRecords.setHorizontalHeaderLabels(headers)
+
+            # УБИРАЕМ ЧЕРНУЮ КОЛОНКУ СЛЕВА (Нумерацию)
+            self.ui.tableRecords.verticalHeader().setVisible(False)
+
+            # Растягиваем колонки
+            header = self.ui.tableRecords.horizontalHeader()
+            header.setSectionResizeMode(QHeaderView.Interactive)
+            header.setSectionResizeMode(0, QHeaderView.Stretch)
+            self.ui.tableRecords.setColumnWidth(1, 200)
+
+            # Базовые настройки
+            self.ui.dateEdit.setDate(QDate.currentDate())
+            if self.ui.comboType.count() == 0:
+                self.ui.comboType.addItems(["Выдача", "Возврат"])
+
+            self.ui.btnAdd.setText("Добавить")
+            self.ui.btnAdd.clicked.connect(self.add_record)
+
+            self.load_demo_data()
+
+    def load_demo_data(self):
+        books = [
+            ["Преступление и наказание", "Ф. Достоевский", "29.03.2026", "Выдача"],
+            ["Мастер и Маргарита", "М. Булгаков", "29.03.2026", "Возврат"],
+            ["Чистый код", "Роберт Мартин", "29.03.2026", "Выдача"],
+            ["Алгоритмы", "Томас Кормен", "29.03.2026", "Выдача"],
+            ["Ведьмак", "А. Сапковский", "29.03.2026", "Возврат"]
+        ]
+        for data in books:
+            row = self.ui.tableRecords.rowCount()
+            self.ui.tableRecords.insertRow(row)
+            for col, text in enumerate(data):
+                self.ui.tableRecords.setItem(row, col, QTableWidgetItem(text))
+
+    def add_record(self):
+        title = self.ui.editBookTitle.text().strip()
+        author = self.ui.editBookAuthor.text().strip()
+        if not title or not author:
+            QMessageBox.warning(self, "Внимание", "Заполните поля!")
+            return
+
+        row = self.ui.tableRecords.rowCount()
+        self.ui.tableRecords.insertRow(row)
+        self.ui.tableRecords.setItem(row, 0, QTableWidgetItem(title))
+        self.ui.tableRecords.setItem(row, 1, QTableWidgetItem(author))
+        self.ui.tableRecords.setItem(row, 2, QTableWidgetItem(self.ui.dateEdit.date().toString("dd.MM.yyyy")))
+        self.ui.tableRecords.setItem(row, 3, QTableWidgetItem(self.ui.comboType.currentText()))
+
+        self.ui.editBookTitle.clear()
+        self.ui.editBookAuthor.clear()
+
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    app.setStyle("Fusion")
+    window = LibraryApp()
+    window.resize(1000, 600)
+    window.show()
+    sys.exit(app.exec())
