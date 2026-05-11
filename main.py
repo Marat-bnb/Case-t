@@ -4,7 +4,7 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QMess
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtCore import QFile, QDate
 
-
+//vdzv
 class LibraryApp(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -18,7 +18,7 @@ class LibraryApp(QMainWindow):
         if not ui_file.open(QFile.ReadOnly):
             print(f"Ошибка: Не найден файл {ui_path}")
             return
-// 545
+# 5451231`
         self.ui = loader.load(ui_file)
         ui_file.close()
 
