@@ -18,7 +18,7 @@ class LibraryApp(QMainWindow):
         if not ui_file.open(QFile.ReadOnly):
             print(f"Ошибка: Не найден файл {ui_path}")
             return
-
+// 545
         self.ui = loader.load(ui_file)
         ui_file.close()
 
